@@ -1,0 +1,21 @@
+{
+  "name": "traveler-js",
+  "description": "A lightweight Javascript Hierarchical Router",
+  "version": "0.0.1",
+  "author": "Luca Colonnello <luca.colonnello91@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "after": "0.8.1",
+    "istanbul": "0.3.8",
+    "mocha": "~2.2.1"
+  },
+  "engines": {
+    "node": ">= 0.10.0"
+  },
+  "scripts": {
+    "test": "mocha --compilers --reporter spec --bail --check-leaks tests/"
+  },
+  "dependencies": {
+    "lodash": "~3.8.0"
+  }
+}
