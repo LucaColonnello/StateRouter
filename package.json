@@ -13,7 +13,7 @@
     "node": ">= 0.10.0"
   },
   "scripts": {
-    "test": "mocha --compilers --reporter spec --bail --check-leaks tests/"
+    "test": "mocha --reporter spec tests/"
   },
   "dependencies": {
     "lodash": "~3.8.0"

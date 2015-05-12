@@ -1,19 +1,19 @@
 var 
-	_assign = require( "lodash/object/assign" ),
-	Route = require( "./Route" );
+	  _assign = require( "lodash/object/assign" )
+	, Route = require( "./Route" );
 
 function RoutesCollection( ) {
 	this.routes = { };
 };
 
-RoutesCollection.prototype.addRoute = function( route ) {
+RoutesCollection.prototype.addRoute = function( _route ) {
 	// check object's type
-	if( instanceof route == Route ) {
+	if( !( _route instanceof Route ) ) {
 		throw new Error( "RoutesCollection.addRoute: object is not a Route." );
 		return;
 	}
 
-	this.routes[ route.name ] = route;
+	this.routes[ _route.name ] = _route;
 };
 
 RoutesCollection.prototype.getRoute = function( routeName ) {
@@ -39,7 +39,7 @@ RoutesCollection.prototype.checkRouteExists = function( routeName ) {
 		return;
 	}
 
-	return ( ( typeof this.routes[ routeName ] != "undefined" ) true : false );
+	return ( ( typeof this.routes[ routeName ] != "undefined" ) ? true : false );
 };
 
 
