@@ -9,7 +9,7 @@ function Route( routesCollection, routeOptions ) {
 		typeof routesCollection == "undefined" ||
 		!( routesCollection instanceof RoutesCollection ) ||
 		!routeOptions.name ||
-		!routeOptions.uri ||
+		!routeOptions.url ||
 		!routeOptions.handler
 	) {
 		throw new Error( "Route: Missing required param." );
@@ -19,7 +19,7 @@ function Route( routesCollection, routeOptions ) {
 	// set options to this
 	_assign( this, {
 		name: null,
-		uri: null,
+		url: null,
 		parent: false,
 		validationRules: false,
 		paramIndexing: false,
@@ -39,17 +39,20 @@ function Route( routesCollection, routeOptions ) {
 		return;
 	}
 
-	// generate complete url pattern
-	this.generateCompleteUrlAndRegExp( );
+	// prepare route to match
+	this.prepareToMatch( );
 };
 
-// generate complete url, regexp and param indexing
-Route.prototype.generateCompleteUrlAndRegExp = function( ) {
+// generate complete url pattern
+// get parent url and param indexing
+// set validation rules by parent
+Route.prototype.prepareToMatch = function( ) {
 	// get parent url pattern and param indexing if parent exists
 	var 
 		  parentRoute
 		, basePath = ""
 		, regexp = ""
+		, navigationTree
 		, paramIndexing;
 
 	// check parent
@@ -57,18 +60,19 @@ Route.prototype.generateCompleteUrlAndRegExp = function( ) {
 		parentRoute = this.routesCollection.getRoute( this.parent );
 		basePath = parentRoute.completeUrl;
 		regexp = parentRoute.regexp;
+		navigationTree = ( ( parentRoute.navigationTree ) ? _assign( [ ], parentRoute.navigationTree ) : null );
 		paramIndexing = ( ( parentRoute.paramIndexing ) ? _assign( [ ], parentRoute.paramIndexing ) : null );
 	}
 	
 	// calculate complete url
-	this.completeUrl = basePath + this.uri;
+	this.completeUrl = basePath + this.url;
 
 	// look for placeholder and translate it to paramIndexing
 	var placeholder = [ ];
-	placeholder = this.uri.match( /\[([a-zA-Z0-9\_\-]+)\]/g );
+	placeholder = this.url.match( /\[([a-zA-Z0-9\_\-]+)\]/g );
 
 	// copy pattern in regxep
-	regexp += this.uri.replace(/\//g, "\\/");
+	regexp += this.url.replace(/\//g, "\\/");
 
 	// check placeholder
 	if( placeholder && placeholder.length ) {
@@ -84,9 +88,14 @@ Route.prototype.generateCompleteUrlAndRegExp = function( ) {
 		}
 	}
 
+	// calculate navigation tree
+	if( !navigationTree ) navigationTree = [ ];
+	navigationTree.push( this.name );
+
 	// set to object
 	this.paramIndexing = paramIndexing || false;
 	this.regexp = regexp;
+	this.navigationTree = navigationTree;
 };
 
 Route.prototype.getUrl = function( param ) {
@@ -105,7 +114,8 @@ Route.prototype.getUrl = function( param ) {
 		// validate params
 		var validationErrors = this.validateParameters( param );
 		if( validationErrors && validationErrors.length ) {
-			throw new Error( "Route.getUrl: " + this.name + ", Validation errors founded: " + validationErrors.length + ", " + JSON.stringify( validationErrors ) );
+			throw new Error( "Route.getUrl: " + this.name + ", Validation errors founded: " + validationErrors.length );
+			console.log( validationErrors );
 			return false;
 		}
 
@@ -147,7 +157,7 @@ Route.prototype.match = function( url ) {
 		// check validation
 		var validationErrors = this.validateParameters( state.param );
 		if( validationErrors && validationErrors.length ) {
-			return state;
+			return false;
 		}
 
 
@@ -158,13 +168,51 @@ Route.prototype.match = function( url ) {
 	return state;
 };
 
-Route.prototype.validateParameters = function( param ) { };
+
+Route.prototype.validateParameters = function( param ) {
+	// validation errors collection
+	var validationErrors = false;
+
+	// check if it has parent and parent has validators
+	if( this.parent ) {
+		var parentRoute = this.routesCollection.getRoute( this.parent );
+		if( parentRoute.validationRules ) {
+			validationErrors = parentRoute.validateParameters( param );
+		}
+	}
+
+	// check validation rules
+	if( this.validationRules ) {
+		for( var i in this.validationRules ) {
+			if( typeof param[ i ] != "undefined" ) {
+				// do different things based on type of validation rule
+				switch( typeof this.validationRules[ i ] ) {
+					case 'object': {
+						if( !this.validationRules[ i ].test( param[ i ] ) ) {
+							if( !validationErrors ) validationErrors = [ ];
+							validationErrors.push( i );
+						}
+						break;
+					}
+					case 'function': {
+						if( !this.validationRules[ i ]( param[ i ] ) ) {
+							if( !validationErrors ) validationErrors = [ ];
+							validationErrors.push( i );
+						}
+						break;
+					}
+				}
+			}
+		}
+	}
+
+	return validationErrors;
+};
 
 
 module.exports = Route;
 
 
 // do this import at the end of file,
-// because it requires Route,
-// that at this point is not defined
+// because it requires Route to be defined
 RoutesCollection = require( "./RoutesCollection" );

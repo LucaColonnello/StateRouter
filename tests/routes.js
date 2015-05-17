@@ -11,7 +11,7 @@ describe('Route', function( ) {
     it('should create a Route', function(done){
      var r = new Route( routesCollection, {
         name: "index",
-        uri: "/",
+        url: "/",
         parent: false,
         handler: function( ) { }
      } );
@@ -32,55 +32,87 @@ describe('Route', function( ) {
     it('should get /dashboard', function( ){
      var r = new Route( routesCollection, {
         name: "dashboard",
-        uri: "/dashboard",
+        url: "/dashboard",
         parent: false,
         handler: function( ) { }
      } );
      routesCollection.addRoute( r );
 
-     assert( routesCollection.getRoute( "dashboard" ), r );
+     assert.deepEqual( routesCollection.getRoute( "dashboard" ), r );
+     assert.deepEqual( r.navigationTree, [ "dashboard" ] );
      assert.equal( r.paramIndexing, false );
-     assert( r.completeUrl, "/dashboard" );
-     assert( r.regexp, "\\/dashboard" );
-     assert( r.getUrl( ), "/dashboard" );
+     assert.equal( r.completeUrl, "/dashboard" );
+     assert.equal( r.regexp, "\\/dashboard" );
+     assert.equal( r.getUrl( ), "/dashboard" );
     });
 
     it('should get /news-category-55', function( ){
      var r = new Route( routesCollection, {
         name: "news-category",
-        uri: "/news-category-[category_id]",
+        url: "/news-category-[category_id]",
         parent: false,
+        validationRules: {
+          category_id: /^[0-9]+$/
+        },
         handler: function( ) { }
      } );
      routesCollection.addRoute( r );
 
-     assert( routesCollection.getRoute( "news-category" ), r );
-     assert( r.paramIndexing.length > 0, true );
-     assert( r.completeUrl, "/news-category-[category_id]" );
-     assert( r.regexp, "\\//news\\-category\\-([0-9a-zA-Z\\_]+)" );
-     assert( r.getUrl( {
+     assert.deepEqual( routesCollection.getRoute( "news-category" ), r );
+     assert.deepEqual( r.navigationTree, [ "news-category" ] );
+     assert.equal( r.paramIndexing.length > 0, true );
+     assert.equal( r.completeUrl, "/news-category-[category_id]" );
+     assert.equal( r.regexp, "\\/news-category-([0-9a-zA-Z\\_\\-]+)" );
+     assert.equal( r.getUrl( {
       category_id: 55
      } ), "/news-category-55" );
+    });
+
+    it('should throw an error with category_id: ciao', function( done ){
+      try {
+        routesCollection.getRoute( "news-category" ).getUrl( {
+          category_id: "ciao"
+        } );
+      } catch( e ) {
+        done( );
+      }
     });
 
     it('should get /news-category-55/post-15.html', function( ){
      var r = new Route( routesCollection, {
         name: "news-post",
         parent: "news-category",
-        uri: "/[post_title]-[post_id].html",
+        url: "/[post_title]-[post_id].html",
+        validationRules: {
+          post_title: /^[A-Za-z0-9\-\_]+$/,
+          post_id: /^[0-9]+$/
+        },
         handler: function( ) { }
      } );
      routesCollection.addRoute( r );
 
-     assert( routesCollection.getRoute( "news-post" ), r );
-     assert( r.paramIndexing.length > 0, true );
-     assert( r.completeUrl, "/news-category-[categoryid]/[post_title]-[post_id].html" );
-     assert( r.regexp, "\\//news\\-category\\-([0-9a-zA-Z\\_]+)\\/([0-9a-zA-Z\\_]+)\\-([0-9a-zA-Z\\_]+)\\.html" );
-     assert( r.getUrl( {
+     assert.deepEqual( routesCollection.getRoute( "news-post" ), r );
+     assert.deepEqual( r.navigationTree, [ "news-category", "news-post" ] );
+     assert.equal( r.paramIndexing.length > 0, true );
+     assert.equal( r.completeUrl, "/news-category-[category_id]/[post_title]-[post_id].html" );
+     assert.equal( r.regexp, "\\/news-category-([0-9a-zA-Z\\_\\-]+)\\/([0-9a-zA-Z\\_\\-]+)-([0-9a-zA-Z\\_\\-]+).html" );
+     assert.equal( r.getUrl( {
       category_id: 55,
       post_id: 15,
       post_title: "post"
      } ), "/news-category-55/post-15.html" );
+    });
+
+    it('should throw an error with category_id: ciao, post_id: ciao', function( done ){
+      try {
+        routesCollection.getRoute( "news-post" ).getUrl( {
+          category_id: "ciao",
+          post_id: "ciao",
+          post_title: "ciao"
+        } );
+      } catch( e ) {
+        done( );
+      }
     });
 
   });
