@@ -22,7 +22,7 @@ function MatchedRoute( route, url, param ) {
 };
 
 
-MatchedRoute.prototype.setup = function() { };
+MatchedRoute.prototype.setup = function( next ) { };
 MatchedRoute.prototype.enter = function( next ) { };
 MatchedRoute.prototype.update = function( next ) { };
 MatchedRoute.prototype.exit = function( next ) { };
