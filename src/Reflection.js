@@ -9,7 +9,7 @@ var Reflection = (function(){
       var text = target.toString();
       var args = text.match(FN_ARGS)[1].split(FN_ARG_SPLIT);
 
-      return args;
+      return ( (args[0] == "") ? [ ] : args );
     }
 
   };
