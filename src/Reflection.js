@@ -8,6 +8,9 @@ var Reflection = (function(){
     getArgs: function(target) {
       var text = target.toString();
       var args = text.match(FN_ARGS)[1].split(FN_ARG_SPLIT);
+      for( var i=0; i < args.length; i++ ) {
+        args[i] = args[i].trim( );
+      }
 
       return ( (args[0] == "") ? [ ] : args );
     }

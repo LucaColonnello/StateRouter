@@ -23,13 +23,12 @@ function MatchedRoute( route, url, param ) {
 };
 
 
-MatchedRoute.prototype.setup = function( next ) {
+MatchedRoute.prototype.setup = function( ) {
 	var
 		  handler = this.route.handler
 		, handlerAcceptedArgs = Reflection.getArgs( handler )
 		, args = [ ]
 		, argsMapping = {
-			next: next,
 			route: this.route,
 			url: this.url,
 			param: this.param
@@ -37,26 +36,28 @@ MatchedRoute.prototype.setup = function( next ) {
 	;
 	
 	for( var i = 0; i < handlerAcceptedArgs.length; i++ ) {
-		if( argsMapping[ handlerAcceptedArgs[ i ] ] ) {
+		if( typeof argsMapping[ handlerAcceptedArgs[ i ] ] != "undefined" ) {
 			args[i] = argsMapping[ handlerAcceptedArgs[ i ] ];
 		}
 	}
 
-	this.handlerInstance = this.route.handler.apply( { }, args );
-
-	if( handlerAcceptedArgs.indexOf( "next" ) == -1 ) {
-		next( );
-	}
+	this.handlerInstance = { };
+	handler.apply( this.handlerInstance, args );
 };
 
 MatchedRoute.prototype.enter = function( next ) {
+	if( !this.handlerInstance ) {
+		throw new Error( "MatchedRoute - " + this.route.name + ": you have to setup the handler, please call setup() method first" );
+		return;
+	}
+
 	if( !this.handlerInstance.enter ) {
 		next( );
 		return;
 	}
 
 	var
-		, handlerAcceptedArgs = Reflection.getArgs( this.handlerInstance.enter )
+		  handlerAcceptedArgs = Reflection.getArgs( this.handlerInstance.enter )
 		, args = [ ]
 		, argsMapping = {
 			next: next
@@ -64,7 +65,7 @@ MatchedRoute.prototype.enter = function( next ) {
 	;
 	
 	for( var i = 0; i < handlerAcceptedArgs.length; i++ ) {
-		if( argsMapping[ handlerAcceptedArgs[ i ] ] ) {
+		if( typeof argsMapping[ handlerAcceptedArgs[ i ] ] != "undefined" ) {
 			args[i] = argsMapping[ handlerAcceptedArgs[ i ] ];
 		}
 	}
@@ -77,13 +78,21 @@ MatchedRoute.prototype.enter = function( next ) {
 };
 
 MatchedRoute.prototype.update = function( next ) {
+	if( !this.handlerInstance ) {
+		throw new Error( "MatchedRoute - " + this.route.name + ": you have to setup the handler, please call setup() method first" );
+		return;
+	}
+
+	// if can't update call exit and then enter instead
 	if( !this.handlerInstance.update ) {
-		next( );
+		this.exit( function( ) {
+			this.enter( next );
+		}.bind( this ) );
 		return;
 	}
 
 	var
-		, handlerAcceptedArgs = Reflection.getArgs( this.handlerInstance.update )
+		  handlerAcceptedArgs = Reflection.getArgs( this.handlerInstance.update )
 		, args = [ ]
 		, argsMapping = {
 			next: next
@@ -91,7 +100,7 @@ MatchedRoute.prototype.update = function( next ) {
 	;
 	
 	for( var i = 0; i < handlerAcceptedArgs.length; i++ ) {
-		if( argsMapping[ handlerAcceptedArgs[ i ] ] ) {
+		if( typeof argsMapping[ handlerAcceptedArgs[ i ] ] != "undefined" ) {
 			args[i] = argsMapping[ handlerAcceptedArgs[ i ] ];
 		}
 	}
@@ -104,13 +113,18 @@ MatchedRoute.prototype.update = function( next ) {
 };
 
 MatchedRoute.prototype.exit = function( next ) {
+	if( !this.handlerInstance ) {
+		throw new Error( "MatchedRoute - " + this.route.name + ": you have to setup the handler, please call setup() method first" );
+		return;
+	}
+
 	if( !this.handlerInstance.exit ) {
 		next( );
 		return;
 	}
 
 	var
-		, handlerAcceptedArgs = Reflection.getArgs( this.handlerInstance.exit )
+		  handlerAcceptedArgs = Reflection.getArgs( this.handlerInstance.exit )
 		, args = [ ]
 		, argsMapping = {
 			next: next
@@ -118,7 +132,7 @@ MatchedRoute.prototype.exit = function( next ) {
 	;
 	
 	for( var i = 0; i < handlerAcceptedArgs.length; i++ ) {
-		if( argsMapping[ handlerAcceptedArgs[ i ] ] ) {
+		if( typeof argsMapping[ handlerAcceptedArgs[ i ] ] != "undefined" ) {
 			args[i] = argsMapping[ handlerAcceptedArgs[ i ] ];
 		}
 	}
@@ -131,13 +145,18 @@ MatchedRoute.prototype.exit = function( next ) {
 };
 
 MatchedRoute.prototype.destroy = function( next ) {
+	if( !this.handlerInstance ) {
+		throw new Error( "MatchedRoute - " + this.route.name + ": you have to setup the handler, please call setup() method first" );
+		return;
+	}
+
 	if( !this.handlerInstance.destroy ) {
 		next( );
 		return;
 	}
 
 	var
-		, handlerAcceptedArgs = Reflection.getArgs( this.handlerInstance.destroy )
+		  handlerAcceptedArgs = Reflection.getArgs( this.handlerInstance.destroy )
 		, args = [ ]
 		, argsMapping = {
 			next: next
@@ -145,7 +164,7 @@ MatchedRoute.prototype.destroy = function( next ) {
 	;
 	
 	for( var i = 0; i < handlerAcceptedArgs.length; i++ ) {
-		if( argsMapping[ handlerAcceptedArgs[ i ] ] ) {
+		if( typeof argsMapping[ handlerAcceptedArgs[ i ] ] != "undefined" ) {
 			args[i] = argsMapping[ handlerAcceptedArgs[ i ] ];
 		}
 	}
@@ -155,10 +174,6 @@ MatchedRoute.prototype.destroy = function( next ) {
 	if( handlerAcceptedArgs.indexOf( "next" ) == -1 ) {
 		next( );
 	}
-};
-
-MatchedRoute.prototype.checkUpdatable = function( ) {
-	return ( ( typeof this.handlerInstance.update != "undefined" ) ? true : false );
 };
 
 module.exports = MatchedRoute;
