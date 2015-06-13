@@ -23,8 +23,7 @@ function Route( routesCollection, routeOptions ) {
 		parent: false,
 		validationRules: false,
 		paramIndexing: false,
-		guards: false,
-		hooks: false,
+		policy: false,
 		handler: null
 	}, routeOptions );
 
