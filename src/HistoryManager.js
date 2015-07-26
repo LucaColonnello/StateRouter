@@ -2,4 +2,4 @@ function HistoryManager( ) {
 	
 };
 
-module.exports = History;
+module.exports = HistoryManager;
